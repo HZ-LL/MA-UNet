@@ -1,0 +1,9 @@
+albumentations              1.4.4
+numpy                       1.26.4
+pandas                      2.2.1
+scikit-learn                1.4.2
+torch                       2.0.1
+torchvision                 0.15.2
+tqdm                        4.65.0
+matplotlib                  3.7.1
+thop                        0.1.1.post2209072238
