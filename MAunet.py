@@ -130,6 +130,7 @@ class MyNet(nn.Module):  # UNet主体
             GroupConvShuffle(features[-1]),
             nn.Conv2d(features[-1], features[-1]*2, kernel_size=1)
         )
+        # 关于num_blocks可根据自己的计算资源酌情设置，本样例作为演示初始化为1
         self.sa = SSA(features[-1] * 2, features[-1] * 3, num_heads=8, num_blocks=1)
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
