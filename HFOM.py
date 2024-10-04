@@ -59,7 +59,7 @@ class Pooling(nn.Sequential):
             nn.AdaptiveAvgPool2d((1, 1)),  # 自适应均值池化
             nn.Conv2d(in_channels, in_channels, 1, bias=False),
             nn.BatchNorm2d(in_channels),
-            nn.Dropout(p=0.5),
+            # nn.Dropout(p=0.1),
             nn.ReLU()
         )
 
