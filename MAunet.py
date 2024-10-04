@@ -9,6 +9,7 @@ from DilaDown import DilaConv
 This code is for academic communication only.
 """
 
+
 class downDynamicCnn(nn.Module):
     def __init__(self, in_channels, out_channels):
         super(downDynamicCnn, self).__init__()
@@ -33,6 +34,7 @@ class downDynamicCnn(nn.Module):
     # 网络推进
     def forward(self, x):
         return self.dyconv3(x) + self.conv5(x)
+
 
 class upDoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -70,13 +72,14 @@ class upDoubleConv(nn.Module):
         y = self.br(y)
         return y
 
+
 class GroupConvShuffle(nn.Module):
     def __init__(self, in_channels):
         super(GroupConvShuffle, self).__init__()
         self.groups = in_channels
         self.group_conv = nn.Sequential(
             nn.Conv2d(in_channels, in_channels, 3, 1, 1,
-                            groups=in_channels, bias=False),
+                      groups=in_channels, bias=False),
             nn.BatchNorm2d(in_channels),
             nn.ReLU(inplace=True)
         )
@@ -92,6 +95,7 @@ class GroupConvShuffle(nn.Module):
         x = self.group_conv(x)
         x = self.shuffle_channels(x)
         return x
+
 
 class MyNet(nn.Module):  # UNet主体
     def __init__(self, in_channels, out_channels, features=[64, 128, 256, 512]):
@@ -119,7 +123,7 @@ class MyNet(nn.Module):  # UNet主体
             self.sk.append(HFOM(feature))
             self.pl.append(Pooling(feature))
             self.br.append(nn.Sequential(
-                nn.Conv2d(feature * 3, feature, 1),
+                # nn.Conv2d(feature , feature, 1),
                 nn.BatchNorm2d(feature),
                 nn.ReLU(inplace=True)
             ))
@@ -128,9 +132,9 @@ class MyNet(nn.Module):  # UNet主体
         # unet网络底层卷积
         self.shuffleconv = nn.Sequential(
             GroupConvShuffle(features[-1]),
-            nn.Conv2d(features[-1], features[-1]*2, kernel_size=1)
+            nn.Conv2d(features[-1], features[-1] * 2, kernel_size=1)
         )
-        # 关于num_blocks可根据自己的计算资源酌情设置，本样例作为演示初始化为1
+        # num_blocks可根据自己的计算资源酌情设置，这里样例演示初始化为1
         self.sa = SSA(features[-1] * 2, features[-1] * 3, num_heads=8, num_blocks=1)
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
@@ -151,12 +155,12 @@ class MyNet(nn.Module):  # UNet主体
         temp = torch.add(temp, temp_sa)
         for j in range(len(skip_connections)):
             # 转置卷积
-            temp = self.ups[j*2](temp)
-            temp1= self.pl[j](skip_connections[j])
+            temp = self.ups[j * 2](temp)
+            temp1 = self.pl[j](skip_connections[j])
             # groupshrffle和下采样相加
             temp = torch.add(skip_connections[j], temp)
             # 施加混合注意力
-            temp2 = torch.cat([self.sk[j](temp), temp1], dim=1)
+            temp2 = torch.add(self.sk[j](temp), temp1)
             skip_connections[j] = self.br[j](temp2)
             # skip_connections[j] = temp2
 
