@@ -59,7 +59,7 @@ class Pooling(nn.Sequential):
             nn.AdaptiveAvgPool2d((1, 1)),  # 自适应均值池化
             nn.Conv2d(in_channels, in_channels, 1, bias=False),
             nn.BatchNorm2d(in_channels),
-            # nn.Dropout(p=0.1),
+            #nn.Dropout(p=0.1),
             nn.ReLU()
         )
 
@@ -84,7 +84,7 @@ class HFOM(nn.Module):
         sa = self.spatial_attention(x)
         y = ca * sa
         x = torch.add(ca, sa)
-        x = torch.cat([x, y], dim = 1)
+        x = torch.add(x, y)
         return x
 
 
