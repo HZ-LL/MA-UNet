@@ -19,6 +19,8 @@ device = "cuda"
 batch_size = 4
 num_workers = 2
 num_epochs = 100
+image_height = 512
+image_width = 512
 flage = True
 write = True
 train_dir = "data/images"
@@ -62,6 +64,7 @@ if __name__ == "__main__":
     # 数据增强
     transform = alb.Compose(
         [
+            alb.Resize(height=image_height, width=image_width),
             alb.Rotate(limit=35, p=1.0),
             alb.HorizontalFlip(p=0.5),
             alb.VerticalFlip(p=0.1),
