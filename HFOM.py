@@ -61,7 +61,7 @@ class Pooling(nn.Sequential):
             nn.Conv2d(in_channels, in_channels, 1, bias=False),
             nn.BatchNorm2d(in_channels),
             # 调试
-            # nn.Dropout(p=0.2),
+            # nn.Dropout(p=0.4),
             nn.ReLU()
         )
 
