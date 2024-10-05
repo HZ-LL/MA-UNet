@@ -1,7 +1,8 @@
 # Enhancing Medical Image Segmentation with MA-UNet: A Hybrid Multi-scale Attention Framework Based on U-Net
 
-Previous version:https://zenodo.org/doi/10.5281/zenodo.13884369  
-![image](https://github.com/user-attachments/assets/889da8db-e173-48ee-b00b-f0384a9cab19)
+If you want to get the code with the dataset, go to:https://zenodo.org/records/13892731    
+![image](https://github.com/user-attachments/assets/461c598b-4ab4-4015-b190-ceaf72de539e)
+
 
 
 # Datasets:
