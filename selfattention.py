@@ -13,7 +13,7 @@ class MultiHeadSelfAttentionBlock(nn.Module):
             nn.Conv2d(embed_dim, in_channels, kernel_size=1),
             nn.BatchNorm2d(in_channels),
             nn.GELU(),
-            nn.Dropout(p=0.1)
+            # nn.Dropout(p=0.1)
         )
         
         self.query = nn.Conv2d(in_channels, embed_dim, 1)
