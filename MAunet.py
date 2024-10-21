@@ -1,14 +1,10 @@
 import torch
 import torch.nn as nn
+#from thop import profile
 from Dynamic import Dynamic_conv2d
 from selfattention import SSA
 from HFOM import HFOM, Pooling, ChannelAttention, SpatialAttention
 from DilaDown import DilaConv
-
-"""
-This code is for academic communication only.
-"""
-
 
 class downDynamicCnn(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -34,7 +30,6 @@ class downDynamicCnn(nn.Module):
     # 网络推进
     def forward(self, x):
         return self.dyconv3(x) + self.conv5(x)
-
 
 class upDoubleConv(nn.Module):
     def __init__(self, in_channels, out_channels):
@@ -72,14 +67,13 @@ class upDoubleConv(nn.Module):
         y = self.br(y)
         return y
 
-
 class GroupConvShuffle(nn.Module):
     def __init__(self, in_channels):
         super(GroupConvShuffle, self).__init__()
         self.groups = in_channels
         self.group_conv = nn.Sequential(
             nn.Conv2d(in_channels, in_channels, 3, 1, 1,
-                      groups=in_channels, bias=False),
+                            groups=in_channels, bias=False),
             nn.BatchNorm2d(in_channels),
             nn.ReLU(inplace=True)
         )
@@ -96,7 +90,6 @@ class GroupConvShuffle(nn.Module):
         x = self.shuffle_channels(x)
         return x
 
-
 class MyNet(nn.Module):  # UNet主体
     def __init__(self, in_channels, out_channels, features=[64, 128, 256, 512]):
         super(MyNet, self).__init__()
@@ -106,6 +99,7 @@ class MyNet(nn.Module):  # UNet主体
         self.sk = nn.ModuleList()
         self.br = nn.ModuleList()
         self.pl = nn.ModuleList()
+        self.temp = nn.ModuleList()
         # 池化层
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -122,8 +116,13 @@ class MyNet(nn.Module):  # UNet主体
             # 上采样--包括一个卷积和一个转置卷积
             self.sk.append(HFOM(feature))
             self.pl.append(Pooling(feature))
+            self.temp.append(nn.Sequential(
+                nn.Conv2d(feature, feature, 3, 1, 1, bias=False),
+                nn.BatchNorm2d(feature),
+                nn.ReLU(inplace=True),
+            ))
             self.br.append(nn.Sequential(
-                # nn.Conv2d(feature , feature, 1),
+                nn.Conv2d(feature * 2, feature, 3, 1, 1, bias = False),
                 nn.BatchNorm2d(feature),
                 nn.ReLU(inplace=True)
             ))
@@ -132,9 +131,9 @@ class MyNet(nn.Module):  # UNet主体
         # unet网络底层卷积
         self.shuffleconv = nn.Sequential(
             GroupConvShuffle(features[-1]),
-            nn.Conv2d(features[-1], features[-1] * 2, kernel_size=1)
+            nn.Conv2d(features[-1], features[-1]*2, kernel_size=1)
         )
-        # num_blocks
+        # num_block非固定，可酌情设置
         self.sa = SSA(features[-1] * 2, features[-1] * 3, num_heads=8, num_blocks=1)
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
@@ -143,7 +142,9 @@ class MyNet(nn.Module):  # UNet主体
 
         for i in range(len(self.downs)):
             x = self.downs[i](x)
+            # 将此处状态加入跳跃连接list
             skip_connections.append(x)
+            # 进行池化操作
             x = self.pool(x)
 
         x = self.shuffleconv(x)
@@ -155,14 +156,15 @@ class MyNet(nn.Module):  # UNet主体
         temp = torch.add(temp, temp_sa)
         for j in range(len(skip_connections)):
             # 转置卷积
-            temp = self.ups[j * 2](temp)
-            temp1 = self.pl[j](skip_connections[j])
+            temp = self.ups[j*2](temp)
+            pl= self.pl[j](skip_connections[j])
             # groupshrffle和下采样相加
             temp = torch.add(skip_connections[j], temp)
+            temp = self.temp[j](temp)
             # 施加混合注意力
-            temp2 = torch.add(self.sk[j](temp), temp1)
-            skip_connections[j] = self.br[j](temp2)
-            # skip_connections[j] = temp2
+            temp1 = self.sk[j](temp)
+            temp1 = self.br[j](torch.cat([temp1, pl], dim = 1))
+            skip_connections[j] = temp1
 
         for i in range(0, len(self.ups), 2):
             # 先进行转置卷积
@@ -180,5 +182,7 @@ if __name__ == '__main__':
     model = MyNet(in_channels=3, out_channels=1).to(device)
     # 将x传入模型
     preds = model(x).to(device)
+    # flops, params = profile(model, inputs=(x,), verbose=False)
+    # print(f"FLOPs: {flops}, Params: {params}")
     print(x.shape)
     print(preds.shape)
