@@ -21,6 +21,8 @@ num_workers = 2
 num_epochs = 100
 image_height = 256
 image_width = 256
+# image_height = 224
+# image_width = 224
 flage = True
 write = True
 train_dir = "data/images"
@@ -121,7 +123,7 @@ if __name__ == "__main__":
         dice_loss = DiceLoss()
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         # 定义余弦退火调度器
-        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=0.0000001)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=0)
         #使用混合精度进行训练
         scaler = torch.cuda.amp.GradScaler()
         epoch_list = []
@@ -151,7 +153,7 @@ if __name__ == "__main__":
             if IoU > best_IoU:
                 best_IoU = IoU
                 # 保存模型和优化器的状态到检查点文件中
-                torch.save(model.state_dict(), 'params/weight_point.pth')
+                # torch.save(model.state_dict(), 'params/weight_point.pth')
                 # 保存验证图片
                 save_preds_imgs(val_loader, model, folder="saved_images/", device=device)
                 print(f"Found better model! Saving to weight_point.pth with IoU Index: {best_IoU}")
