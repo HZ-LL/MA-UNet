@@ -123,7 +123,7 @@ if __name__ == "__main__":
         dice_loss = DiceLoss()
         optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         # 定义余弦退火调度器
-        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=0)
+        # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=50, eta_min=1e-5)
         #使用混合精度进行训练
         scaler = torch.cuda.amp.GradScaler()
         epoch_list = []
