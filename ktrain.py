@@ -20,11 +20,13 @@ batch_size = 4
 num_workers = 2
 num_epochs = 100
 """
-值得提醒的是，分割眼底图像时，最好使用512×512的分辨率。调整大小可能会丢失特征导致分割精度下降。
-其余两个数据集，使用256×256分辨率可以更好的节省训练时间。
+PCL:512 × 512
+DDTI: 256 × 256
+DRIVE: 512 × 512
+值得提醒的是，分割眼底图像时，最好使用512×512的分辨率。过度调整大小可能会丢失特征导致分割精度下降。其余使用256 × 256可以相对节省训练时间。
 """
-image_height = 256
-image_width = 256
+image_height = 512
+image_width = 512
 # image_height = 224
 # image_width = 224
 flage = True
