@@ -10,6 +10,7 @@
 
 - If you want to use our code, you must have the following preparation under the PyTorch framework: see requirement.txt for details
 - Code Guidance: Download the dataset in the above link, put the training images and labels into "data/images" and "data/masks" respectively, and then run the ktrain.py to successfully train our model.
+- If you want to use the pre-trained weights, please go to: https://doi.org/10.5281/zenodo.15023126
 
 # Reference
 
