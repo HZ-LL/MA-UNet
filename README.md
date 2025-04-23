@@ -1,5 +1,11 @@
 # Enhancing Medical Image Segmentation with MA-UNet: A Hybrid Multi-scale Attention Framework Based on U-Net
 
+- If you want to use the pre-trained weights, please go to: https://doi.org/10.5281/zenodo.15023126
+
+# 2025/4
+- It addresses the issues of instability and non-convergence during the later stages of training MA-UNet on DDTI.
+![Picture](result/IoU_Index_DDTI.png)
+
 # Datasets
 
 - Pulmonary CT lesions (PCL)  is publicly available at https://www.kaggle.com/datasets/kmader/finding-lungs-in-ct-data/data. Provided by K  Scott Mader, this dataset consists of 267 two-dimensional CT images of lung lesions  and corresponding ground truth images. 
@@ -10,7 +16,6 @@
 
 - If you want to use our code, you must have the following preparation under the PyTorch framework: see requirement.txt for details
 - Code Guidance: Download the dataset in the above link, put the training images and labels into "data/images" and "data/masks" respectively, and then run the ktrain.py to successfully train our model.
-- If you want to use the pre-trained weights, please go to: https://doi.org/10.5281/zenodo.15023126
 
 # Reference
 
