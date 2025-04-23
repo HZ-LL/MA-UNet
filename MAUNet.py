@@ -63,7 +63,7 @@ class SpatialAttention(nn.Module):
         out = torch.cat([avg_out, max_out], dim=1)
         # 卷积融合通道信息 [b,2,h,w]==>[b,1,h,w]
         out = self.conv1(out)
-        return self.sigmoid(out)*x + x
+        return self.sigmoid(out)*x
 
 class ChannelAttention(nn.Module):
     def __init__(self, in_planes, ratio=8):
@@ -73,6 +73,7 @@ class ChannelAttention(nn.Module):
         self.max_pool = nn.AdaptiveMaxPool2d(1)
         # self.temperature = nn.Parameter(torch.tensor(1.0))
 
+        # 利用1x1卷积代替全连接，1*1卷积效果比全连接更好，参考ECA机制
         self.conv = nn.Sequential(
             nn.Conv2d(in_planes, in_planes // ratio, 1, bias=False),
             nn.ReLU(),
@@ -108,6 +109,7 @@ class Pooling(nn.Sequential):
     def forward(self, x):
         size = x.shape[-2:]
         x = super(Pooling, self).forward(x)
+        # 上采样
         x = F.interpolate(x, size=size, mode='bilinear', align_corners=False)
         return x
         # return self.conv(x)
@@ -115,7 +117,9 @@ class Pooling(nn.Sequential):
 class AT(nn.Module):
     def __init__(self, in_planes):
         super().__init__()
+        # 实例化通道注意力机制
         self.channel_attention = ChannelAttention(in_planes)
+        # 实例化空间注意力机制
         self.spatial_attention = SpatialAttention()
 
     # 前向传播
@@ -152,7 +156,6 @@ class Dynamic_conv2d(nn.Module):
         if init_weight:
             self._initialize_weights()
 
-    #TODO 初始化
     def _initialize_weights(self):
         for i in range(self.K):
             nn.init.kaiming_uniform_(self.weight[i])
@@ -195,7 +198,7 @@ class FEM(nn.Module):
         self.br = nn.Sequential(
             nn.Conv2d(out_channels, out_channels, 1, bias=False),
             nn.BatchNorm2d(out_channels),
-            nn.ReLU(inplace=True)
+            nn.ReLU(inplace=True),
         )
 
     def forward(self, x):
@@ -350,18 +353,20 @@ class SSA(nn.Module):
 
     def forward(self, x):
         for ssa in self.ssa_blocks:
-            x = ssa(x) + x
+            x = ssa(x)
         return x
 
 class MA(nn.Module):  # UNet主体
     def __init__(self, in_channels, out_channels):
         super(MA, self).__init__()
         features = [64, 128, 256, 512]
+        # 声明list用于上采样和下采样存储
         self.ups = nn.ModuleList()
         self.downs = nn.ModuleList()
         self.sk = nn.ModuleList()
         self.br = nn.ModuleList()
-        self.temp = nn.ModuleList()
+#        self.pl = nn.ModuleList()
+#        self.temp = nn.ModuleList()
         # 池化层
         self.pool = nn.MaxPool2d(kernel_size=2, stride=2)
 
@@ -375,12 +380,9 @@ class MA(nn.Module):  # UNet主体
                 in_channels = feature
 
         for feature in reversed(features):
+            # 上采样--包括一个卷积和一个转置卷积
             self.sk.append(AT(feature))
-            self.temp.append(nn.Sequential(
-                nn.Conv2d(feature, feature, 1, bias=False),
-                nn.BatchNorm2d(feature),
-                nn.ReLU(inplace=True),
-            ))
+
             self.br.append(nn.Sequential(
                 nn.Conv2d(feature, feature, 1, bias = False),
                 nn.BatchNorm2d(feature),
@@ -388,13 +390,13 @@ class MA(nn.Module):  # UNet主体
             ))
             self.ups.append(nn.ConvTranspose2d(feature * 2, feature, kernel_size=2, stride=2))
             self.ups.append(upDoubleConv(feature * 2, feature))
-
+        # unet网络底层卷积
         self.shuffleconv = nn.Sequential(
             GroupConvShuffle(features[-1]),
             nn.Conv2d(features[-1], features[-1]*2, kernel_size=1)
         )
-        # num_blocks = n
         self.sa = SSA(features[-1] * 2, features[-1] * 3, num_heads=8, num_blocks=1)
+#        self.sa = MultiHeadSelfAttentionBlock(features[-1] * 2, features[-1] * 3, num_heads=8)
         self.final_conv = nn.Conv2d(features[0], out_channels, kernel_size=1)
 
     def forward(self, x):
@@ -402,7 +404,9 @@ class MA(nn.Module):  # UNet主体
 
         for i in range(len(self.downs)):
             x = self.downs[i](x)
+            # 将此处状态加入跳跃连接list
             skip_connections.append(x)
+            # 进行池化操作
             x = self.pool(x)
 
         x = self.shuffleconv(x)
@@ -410,11 +414,11 @@ class MA(nn.Module):  # UNet主体
         x = self.sa(x)
         temp_sa = x
         skip_connections = skip_connections[::-1]
+        # groupshuffle+SA_feature
         temp = torch.add(temp, temp_sa)
         for j in range(len(skip_connections)):
             temp = self.ups[j*2](temp)
             temp = torch.add(skip_connections[j], temp)
-            temp = self.temp[j](temp)
             temp1 = self.sk[j](temp)
             skip_connections[j] = self.br[j](temp1)
 
