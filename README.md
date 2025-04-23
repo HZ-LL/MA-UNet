@@ -1,8 +1,8 @@
 # Enhancing Medical Image Segmentation with MA-UNet: A Hybrid Multi-scale Attention Framework Based on U-Net
 
-- If you want to use the pre-trained weights, please go to: https://doi.org/10.5281/zenodo.15023126
+- If you want to use the pre-trained weights, please go to:  https://doi.org/10.5281/zenodo.15267314
 
-# 2025/4
+# #2025/4
 - It addresses the issues of instability and non-convergence during the later stages of training MA-UNet on DDTI.
 ![Picture](result/IoU_Index_DDTI.png)
 
