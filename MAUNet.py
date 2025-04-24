@@ -131,6 +131,7 @@ class AT(nn.Module):
         x = torch.add(x, y)
         return x
 
+# 参考https://github.com/kaijieshi7/Dynamic-convolution-Pytorch
 class Dynamic_conv2d(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size, stride, padding, groups, ratio=0.25,
                  dilation=1, bias=False, K=4, temperature=34, init_weight=True):
